@@ -5,7 +5,7 @@ use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, use_context};
-use floem::views::{button, Decorators, dyn_stack, h_stack, tab, v_stack};
+use floem::views::{button, Decorators, dyn_stack, h_stack, tab, TupleStackExt, v_stack};
 use crate::config::Config;
 use crate::documents::{DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -130,11 +130,12 @@ fn app_view() -> impl IntoView {
             .background(Color::DIM_GRAY)
         );
 
-    v_stack((
+    (
         toolbar,
         tab_bar,
         document_container,
-    ))
+    )
+        .v_stack()
         .style(|s| s
             .width_full()
             .height_full()
