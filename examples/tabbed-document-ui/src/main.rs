@@ -4,8 +4,8 @@ use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
-use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_container, dyn_stack, empty, h_stack, v_stack};
+use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, use_context};
+use floem::views::{button, Decorators, dyn_stack, h_stack, tab, v_stack};
 use crate::config::Config;
 use crate::documents::{DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -96,33 +96,31 @@ fn app_view() -> impl IntoView {
             .background(Color::parse("#dddddd").unwrap())
         );
 
-    let document_container = dyn_container(
+    let document_container = tab(
         move || {
-            let app_state: Option<Arc<ApplicationState>> = use_context();
-            app_state.unwrap().active_tab.get()
-        },
-        move |active_tab| {
             let app_state: Arc<ApplicationState> = use_context().unwrap();
-            if let Some(tab_key) = active_tab {
-                println!("displaying tab. tab_id: {:?}", &tab_key);
+            let index = *app_state.active_tab.get().unwrap();
+            index
+        },
+        move || {
+            let app_state: Arc<ApplicationState> = use_context().unwrap();
+            app_state.tabs.get().into_iter().enumerate()
+        },
+        // TODO investigate why we need this closure at all, it's not clear from the examples and there is no documentation.
+        move |(index, _tab_kind)| {
+            TabKey::new(*index)
+        },
+        move |(index, active_tab)| {
+            let tab_key = TabKey::new(index);
+            println!("displaying tab. tab_id: {:?}", &tab_key);
 
-                let tabs_signal = app_state.tabs;
-                let view = tabs_signal.with_untracked(|tabs| {
-                    let tab = tabs.get(*tab_key).unwrap().clone();
-
-                    match tab {
-                        TabKind::Home(_home_tab) => {
-                            HomeContainer::build_view(tab_key).into_any()
-                        }
-                        TabKind::Document(document_tab) => {
-                            DocumentContainer::build_view(document_tab.document_key).into_any()
-                        }
-                    }
-                });
-
-                view
-            } else {
-                empty().into_any()
+            match active_tab {
+                TabKind::Home(_home_tab) => {
+                    HomeContainer::build_view(tab_key).into_any()
+                }
+                TabKind::Document(document_tab) => {
+                    DocumentContainer::build_view(document_tab.document_key).into_any()
+                }
             }
         }
     )
