@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use slotmap::SlotMap;
 use floem::action::open_file;
-use floem::event::Event;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
@@ -73,7 +72,7 @@ fn app_view() -> impl IntoView {
             match tab_kind {
                 TabKind::Home(_home_tab) => {
                     button("Home")
-                        .action(move |_event| {
+                        .action(move || {
                             println!("Home tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
@@ -82,7 +81,7 @@ fn app_view() -> impl IntoView {
                 }
                 TabKind::Document(_document_tab) => {
                     button("Document")
-                        .action(move |_event| {
+                        .action(move || {
                             println!("Document tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
@@ -145,7 +144,7 @@ fn app_view() -> impl IntoView {
         )
 }
 
-fn add_home_pressed(_event: &Event) {
+fn add_home_pressed() {
     println!("Add home pressed");
 
     let app_state: Arc<ApplicationState> = use_context().unwrap();
@@ -157,11 +156,11 @@ fn add_home_pressed(_event: &Event) {
     });
 }
 
-fn new_pressed(_event: &Event) {
+fn new_pressed() {
     println!("New pressed");
 }
 
-fn open_pressed(_event: &Event) {
+fn open_pressed() {
     println!("Open pressed");
 
     let opened_file: RwSignal<Option<FileInfo>> = RwSignal::new(None);
