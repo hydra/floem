@@ -88,7 +88,6 @@ impl TextDocument {
             }
                 .style(|s|s
                     .height_full()
-                    // FIXME if this is 80% or 'full' it still doesn't take up the remaining space.
                     .width_full()
                     .background(Color::DARK_GRAY)
                 ),

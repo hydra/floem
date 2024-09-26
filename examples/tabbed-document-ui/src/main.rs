@@ -4,13 +4,13 @@ use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
-use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, use_context};
-use floem::views::{button, Decorators, dyn_stack, h_stack, tab, TupleStackExt, v_stack};
+use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
+use floem::views::{button, Decorators, dyn_stack, h_stack, tab, TupleStackExt};
 use crate::config::Config;
-use crate::documents::{DocumentKey, DocumentKind};
+use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
 use crate::documents::text::TextDocument;
-use crate::tabs::document::{DocumentContainer, DocumentTab};
+use crate::tabs::document::DocumentTab;
 use crate::tabs::home::{HomeContainer, HomeTab};
 use crate::tabs::{TabKey, TabKind};
 
@@ -114,12 +114,17 @@ fn app_view() -> impl IntoView {
             let tab_key = TabKey::new(index);
             println!("displaying tab. tab_id: {:?}", &tab_key);
 
+            let app_state: Arc<ApplicationState> = use_context().unwrap();
+
             match active_tab {
                 TabKind::Home(_home_tab) => {
                     HomeContainer::build_view(tab_key).into_any()
                 }
                 TabKind::Document(document_tab) => {
-                    DocumentContainer::build_view(document_tab.document_key).into_any()
+                    app_state.documents.with(|documents|{
+                        let document = documents.get(document_tab.document_key).unwrap();
+                        DocumentContainer::build_view(document).into_any()
+                    })
                 }
             }
         }
