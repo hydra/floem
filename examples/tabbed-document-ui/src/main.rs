@@ -198,15 +198,15 @@ fn open_pressed() {
             documents.insert(document)
         }).unwrap();
 
-        app_state.tabs.update(|tabs| {
+        let tab_key = app_state.tabs.try_update(|tabs| {
             tabs.push(
                 TabKind::Document(DocumentTab { document_key })
             );
 
-            let tab_key = TabKey::new(tabs.len() - 1);
-
-            app_state.active_tab.set(Some(tab_key));
+            TabKey::new(tabs.len() - 1)
         });
+
+        app_state.active_tab.set(tab_key);
     });
 
     open_file(
@@ -231,13 +231,13 @@ fn open_pressed() {
 }
 
 fn show_home_tab(app_state: &ApplicationState) {
-    app_state.tabs.update(|tabs| {
+    let tab_key = app_state.tabs.try_update(|tabs| {
         tabs.push(
             TabKind::Home(HomeTab {})
         );
 
-        let tab_key = TabKey::new(tabs.len() - 1);
+        TabKey::new(tabs.len() - 1)
+    });
 
-        app_state.active_tab.set(Some(tab_key));
-    })
+    app_state.active_tab.set(tab_key);
 }
