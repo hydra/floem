@@ -77,7 +77,8 @@ fn app_view() -> impl IntoView {
                             println!("Home tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
-                        }).into_any()
+                        })
+                        .into_any()
                 }
                 TabKind::Document(_document_tab) => {
                     button("Document")
@@ -85,7 +86,8 @@ fn app_view() -> impl IntoView {
                             println!("Document tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
-                        }).into_any()
+                        })
+                        .into_any()
                 }
             }
         }
