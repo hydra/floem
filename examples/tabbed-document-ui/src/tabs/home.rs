@@ -1,5 +1,5 @@
 use floem::View;
-use floem::views::{dyn_view, label, v_stack};
+use floem::views::{label, TupleStackExt};
 use super::TabKey;
 
 #[derive(Clone)]
@@ -10,9 +10,10 @@ pub struct HomeContainer {}
 
 impl HomeContainer {
     pub fn build_view(tab_key: TabKey) -> impl View {
-        v_stack((
-            label(|| "Home Tab Content"),
-            dyn_view(move || format!("tab_id: {:?}", &tab_key))
-        ))
+        (
+            "Home Tab Content",
+            label(move || format!("tab_id: {:?}", &tab_key))
+        )
+            .v_stack()
     }
 }
