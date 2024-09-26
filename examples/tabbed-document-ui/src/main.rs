@@ -43,7 +43,7 @@ fn main() {
 
 struct ApplicationState {
     documents: RwSignal<SlotMap<DocumentKey, DocumentKind>>,
-    tabs: RwSignal<SlotMap<TabKey, TabKind>>,
+    tabs: RwSignal<Vec<TabKind>>,
     active_tab: RwSignal<Option<TabKey>>,
     config: Config,
 }
@@ -63,11 +63,11 @@ fn app_view() -> impl IntoView {
         move || {
             let app_state: Option<Arc<ApplicationState>> = use_context();
 
-            app_state.unwrap().tabs.get()
+            app_state.unwrap().tabs.get().into_iter().enumerate()
         },
-        move |(tab_key, _tab_kind)| tab_key.clone(),
-        move |(tab_key, tab_kind)| {
-            println!("adding tab. tab_id: {:?}", tab_key);
+        move |(index, _tab_kind)| TabKey::new(*index),
+        move |(index, tab_kind)| {
+            println!("adding tab. tab_id: {:?}", index);
 
             match tab_kind {
                 TabKind::Home(_home_tab) => {
@@ -75,7 +75,7 @@ fn app_view() -> impl IntoView {
                         .action(move || {
                             println!("Home tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
-                            app_state.unwrap().active_tab.set(Some(tab_key))
+                            app_state.unwrap().active_tab.set(Some(TabKey::new(index)))
                         })
                         .into_any()
                 }
@@ -84,7 +84,7 @@ fn app_view() -> impl IntoView {
                         .action(move || {
                             println!("Document tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
-                            app_state.unwrap().active_tab.set(Some(tab_key))
+                            app_state.unwrap().active_tab.set(Some(TabKey::new(index)))
                         })
                         .into_any()
                 }
@@ -108,7 +108,7 @@ fn app_view() -> impl IntoView {
 
                 let tabs_signal = app_state.tabs;
                 let view = tabs_signal.with_untracked(|tabs| {
-                    let tab = tabs.get(tab_key).unwrap().clone();
+                    let tab = tabs.get(*tab_key).unwrap().clone();
 
                     match tab {
                         TabKind::Home(_home_tab) => {
@@ -150,7 +150,7 @@ fn add_home_pressed() {
     let app_state: Arc<ApplicationState> = use_context().unwrap();
 
     app_state.tabs.update(|tabs|{
-        tabs.insert(
+        tabs.push(
             TabKind::Home(HomeTab {})
         );
     });
@@ -195,9 +195,11 @@ fn open_pressed() {
         }).unwrap();
 
         app_state.tabs.update(|tabs| {
-            let tab_key = tabs.insert(
+            tabs.push(
                 TabKind::Document(DocumentTab { document_key })
             );
+
+            let tab_key = TabKey::new(tabs.len() - 1);
 
             app_state.active_tab.set(Some(tab_key));
         });
@@ -226,9 +228,11 @@ fn open_pressed() {
 
 fn show_home_tab(app_state: &ApplicationState) {
     app_state.tabs.update(|tabs| {
-        let tab_key = tabs.insert(
+        tabs.push(
             TabKind::Home(HomeTab {})
         );
+
+        let tab_key = TabKey::new(tabs.len() - 1);
 
         app_state.active_tab.set(Some(tab_key));
     })
