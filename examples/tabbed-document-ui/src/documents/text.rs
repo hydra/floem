@@ -45,7 +45,6 @@ impl TextDocument {
                     h_stack((
                         static_label("selection"),
                         {
-                            // FIXME panics
                             let selection = self.selection.clone();
                             label(move || {
                                 selection.get()

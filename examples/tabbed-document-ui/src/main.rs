@@ -2,10 +2,10 @@ use std::sync::Arc;
 use slotmap::{DefaultKey, SlotMap};
 use floem::action::open_file;
 use floem::event::Event;
-use floem::file::{FileDialogOptions, FileSpec};
+use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
-use floem::reactive::{create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
+use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
 use floem::views::{button, Decorators, dyn_container, dyn_stack, empty, h_stack, v_stack};
 use crate::config::Config;
 use crate::documents::DocumentKind;
@@ -168,6 +168,46 @@ fn new_pressed(_event: &Event) {
 fn open_pressed(_event: &Event) {
     println!("Open pressed");
 
+    let opened_file: RwSignal<Option<FileInfo>> = RwSignal::new(None);
+
+    create_effect(move |_|{
+        let Some(file_info) = opened_file.get() else {
+            return;
+        };
+
+        println!("Selected file: {:?}", file_info.path);
+
+        let app_state: Arc<ApplicationState> = use_context().unwrap();
+
+        let path = file_info.path.first().unwrap();
+
+        let document = match path.extension().unwrap().to_str().unwrap() {
+            "txt" => {
+                let text_document = TextDocument::new(path.clone());
+
+                DocumentKind::TextDocument(text_document)
+            },
+            "bmp" => {
+                let image_document = ImageDocument::new(path.clone());
+
+                DocumentKind::ImageDocument(image_document)
+            },
+            _ => unreachable!()
+        };
+
+        let document_key = app_state.documents.try_update(|documents| {
+            documents.insert(document)
+        }).unwrap();
+
+        app_state.tabs.update(|tabs| {
+            let tab_key = tabs.insert(
+                TabKind::Document(DocumentTab { document_key })
+            );
+
+            app_state.active_tab.set(Some(tab_key));
+        });
+    });
+
     open_file(
         FileDialogOptions::new()
             .title("Select a file")
@@ -182,39 +222,8 @@ fn open_pressed(_event: &Event) {
                 }
             ]),
         move |file_info| {
-            if let Some(file) = file_info {
-                println!("Selected file: {:?}", file.path);
-
-
-                let app_state: Arc<ApplicationState> = use_context().unwrap();
-
-                let path = file.path.first().unwrap();
-
-                let document = match path.extension().unwrap().to_str().unwrap() {
-                    "txt" => {
-                        let text_document = TextDocument::new(path.clone());
-
-                        DocumentKind::TextDocument(text_document)
-                    },
-                    "bmp" => {
-                        let image_document = ImageDocument::new(path.clone());
-
-                        DocumentKind::ImageDocument(image_document)
-                    },
-                    _ => unreachable!()
-                };
-
-                let document_key= app_state.documents.try_update(|documents|{
-                    documents.insert(document)
-                }).unwrap();
-
-                app_state.tabs.update(|tabs|{
-                    let tab_key = tabs.insert(
-                        TabKind::Document(DocumentTab { document_key })
-                    );
-
-                    app_state.active_tab.set(Some(tab_key));
-                });
+            if file_info.is_some() {
+                opened_file.set(file_info);
             }
         },
     );
