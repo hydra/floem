@@ -1,20 +1,19 @@
 use std::sync::Arc;
-use slotmap::DefaultKey;
 use floem::reactive::{SignalWith, use_context};
 use floem::{IntoView, View};
 use floem::views::dyn_container;
 use crate::ApplicationState;
-use crate::documents::DocumentKind;
+use crate::documents::{DocumentKey, DocumentKind};
 
 #[derive(Clone)]
 pub struct DocumentTab {
-    pub document_key: DefaultKey,
+    pub document_key: DocumentKey,
 }
 
 pub struct DocumentContainer {}
 
 impl DocumentContainer {
-    pub fn build_view(document_key: DefaultKey) -> impl View {
+    pub fn build_view(document_key: DocumentKey) -> impl View {
         dyn_container(
         move || {
             document_key

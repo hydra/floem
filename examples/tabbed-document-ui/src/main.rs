@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use slotmap::{DefaultKey, SlotMap};
+use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::event::Event;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
@@ -8,12 +8,12 @@ use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
 use floem::views::{button, Decorators, dyn_container, dyn_stack, empty, h_stack, v_stack};
 use crate::config::Config;
-use crate::documents::DocumentKind;
+use crate::documents::{DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
 use crate::documents::text::TextDocument;
 use crate::tabs::document::{DocumentContainer, DocumentTab};
 use crate::tabs::home::{HomeContainer, HomeTab};
-use crate::tabs::TabKind;
+use crate::tabs::{TabKey, TabKind};
 
 pub mod config;
 pub mod documents;
@@ -43,9 +43,9 @@ fn main() {
 }
 
 struct ApplicationState {
-    documents: RwSignal<SlotMap<DefaultKey, DocumentKind>>,
-    tabs: RwSignal<SlotMap<DefaultKey, TabKind>>,
-    active_tab: RwSignal<Option<DefaultKey>>,
+    documents: RwSignal<SlotMap<DocumentKey, DocumentKind>>,
+    tabs: RwSignal<SlotMap<TabKey, TabKind>>,
+    active_tab: RwSignal<Option<TabKey>>,
     config: Config,
 }
 
