@@ -56,9 +56,9 @@ fn app_view() -> impl IntoView {
         // Toolbar
         //
         h_stack((
-            button(||"Add home").on_click_stop(add_home_pressed),
-            button(||"New").on_click_stop(new_pressed),
-            button(||"Open").on_click_stop(open_pressed),
+            button("Add home").on_click_stop(add_home_pressed),
+            button("New").on_click_stop(new_pressed),
+            button("Open").on_click_stop(open_pressed),
         ))
             .style(|s| s
                 .width_full()
@@ -80,7 +80,7 @@ fn app_view() -> impl IntoView {
 
                 match tab_kind {
                     TabKind::Home(_home_tab) => {
-                        button(||"Home")
+                        button("Home")
                             .on_click_stop(move |_event|{
                                 println!("Home tab pressed");
                                 let app_state: Option<Arc<ApplicationState>> = use_context();
@@ -89,7 +89,7 @@ fn app_view() -> impl IntoView {
 
                     }
                     TabKind::Document(_document_tab) => {
-                        button(||"Document")
+                        button("Document")
                             .on_click_stop(move |_event|{
                                 println!("Document tab pressed");
                                 let app_state: Option<Arc<ApplicationState>> = use_context();
