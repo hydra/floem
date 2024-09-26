@@ -50,97 +50,91 @@ struct ApplicationState {
 }
 
 fn app_view() -> impl IntoView {
+    let toolbar = h_stack((
+        button("Add home").on_click_stop(add_home_pressed),
+        button("New").on_click_stop(new_pressed),
+        button("Open").on_click_stop(open_pressed),
+    ))
+        .style(|s| s
+            .width_full()
+            .background(Color::parse("#eeeeee").unwrap())
+        );
+
+    let tab_bar = dyn_stack(
+        move || {
+            let app_state: Option<Arc<ApplicationState>> = use_context();
+
+            app_state.unwrap().tabs.get()
+        },
+        move |(tab_key, _tab_kind)| tab_key.clone(),
+        move |(tab_key, tab_kind)| {
+            println!("adding tab. tab_id: {:?}", tab_key);
+
+            match tab_kind {
+                TabKind::Home(_home_tab) => {
+                    button("Home")
+                        .on_click_stop(move |_event| {
+                            println!("Home tab pressed");
+                            let app_state: Option<Arc<ApplicationState>> = use_context();
+                            app_state.unwrap().active_tab.set(Some(tab_key))
+                        }).into_any()
+                }
+                TabKind::Document(_document_tab) => {
+                    button("Document")
+                        .on_click_stop(move |_event| {
+                            println!("Document tab pressed");
+                            let app_state: Option<Arc<ApplicationState>> = use_context();
+                            app_state.unwrap().active_tab.set(Some(tab_key))
+                        }).into_any()
+                }
+            }
+        }
+    )
+        .style(|s| s
+            .width_full()
+            .background(Color::parse("#dddddd").unwrap())
+        );
+
+    let document_container = dyn_container(
+        move || {
+            let app_state: Option<Arc<ApplicationState>> = use_context();
+            app_state.unwrap().active_tab.get()
+        },
+        move |active_tab| {
+            let app_state: Arc<ApplicationState> = use_context().unwrap();
+            if let Some(tab_key) = active_tab {
+                println!("displaying tab. tab_id: {:?}", &tab_key);
+
+                let tabs_signal = app_state.tabs;
+                let view = tabs_signal.with_untracked(|tabs| {
+                    let tab = tabs.get(tab_key).unwrap().clone();
+
+                    match tab {
+                        TabKind::Home(_home_tab) => {
+                            HomeContainer::build_view(tab_key).into_any()
+                        }
+                        TabKind::Document(document_tab) => {
+                            DocumentContainer::build_view(document_tab.document_key).into_any()
+                        }
+                    }
+                });
+
+                view
+            } else {
+                empty().into_any()
+            }
+        }
+    )
+        .style(|s| s
+            .width_full()
+            .height_full()
+            .background(Color::DIM_GRAY)
+        );
 
     v_stack((
-        //
-        // Toolbar
-        //
-        h_stack((
-            button("Add home").on_click_stop(add_home_pressed),
-            button("New").on_click_stop(new_pressed),
-            button("Open").on_click_stop(open_pressed),
-        ))
-            .style(|s| s
-                .width_full()
-                .background(Color::parse("#eeeeee").unwrap())
-            ),
-
-        //
-        // Tab bar
-        //
-        dyn_stack(
-            move || {
-                let app_state: Option<Arc<ApplicationState>> = use_context();
-
-                app_state.unwrap().tabs.get()
-            },
-            move |(tab_key, _tab_kind)| tab_key.clone(),
-            move |(tab_key, tab_kind)| {
-                println!("adding tab. tab_id: {:?}", tab_key);
-
-                match tab_kind {
-                    TabKind::Home(_home_tab) => {
-                        button("Home")
-                            .on_click_stop(move |_event|{
-                                println!("Home tab pressed");
-                                let app_state: Option<Arc<ApplicationState>> = use_context();
-                                app_state.unwrap().active_tab.set(Some(tab_key))
-                            }).into_any()
-
-                    }
-                    TabKind::Document(_document_tab) => {
-                        button("Document")
-                            .on_click_stop(move |_event|{
-                                println!("Document tab pressed");
-                                let app_state: Option<Arc<ApplicationState>> = use_context();
-                                app_state.unwrap().active_tab.set(Some(tab_key))
-                            }).into_any()
-                    }
-                }
-            }
-        )
-            .style(|s| s
-                .width_full()
-                .background(Color::parse("#dddddd").unwrap())
-            ),
-        //
-        // Content
-        //
-        dyn_container(
-            move || {
-                let app_state: Option<Arc<ApplicationState>> = use_context();
-                app_state.unwrap().active_tab.get()
-            },
-            move |active_tab| {
-                let app_state: Arc<ApplicationState> = use_context().unwrap();
-                if let Some(tab_key) = active_tab {
-                    println!("displaying tab. tab_id: {:?}", &tab_key);
-
-                    let tabs_signal = app_state.tabs;
-                    let view = tabs_signal.with_untracked(|tabs|{
-                        let tab = tabs.get(tab_key).unwrap().clone();
-
-                        match tab {
-                            TabKind::Home(_home_tab) => {
-                                HomeContainer::build_view(tab_key).into_any()
-                            }
-                            TabKind::Document(document_tab) => {
-                                DocumentContainer::build_view(document_tab.document_key).into_any()
-                            }
-                        }
-                    });
-
-                    view
-                } else {
-                    empty().into_any()
-                }
-            }
-        )
-            .style(|s|s
-                .width_full()
-                .height_full()
-                .background(Color::DIM_GRAY)
-            ),
+        toolbar,
+        tab_bar,
+        document_container,
     ))
         .style(|s| s
             .width_full()
