@@ -53,6 +53,7 @@ fn app_view() -> impl IntoView {
         button("Add home").action(add_home_pressed),
         button("New").action(new_pressed),
         button("Open").action(open_pressed),
+        button("Close all").action(close_all_pressed),
     ))
         .style(|s| s
             .width_full()
@@ -99,8 +100,7 @@ fn app_view() -> impl IntoView {
     let document_container = tab(
         move || {
             let app_state: Arc<ApplicationState> = use_context().unwrap();
-            let index = *app_state.active_tab.get().unwrap();
-            index
+            app_state.active_tab.get().map(|active|*active)
         },
         move || {
             let app_state: Arc<ApplicationState> = use_context().unwrap();
@@ -158,6 +158,15 @@ fn add_home_pressed() {
             TabKind::Home(HomeTab {})
         );
     });
+}
+
+fn close_all_pressed() {
+    println!("Close all pressed");
+
+    let app_state: Arc<ApplicationState> = use_context().unwrap();
+
+    app_state.active_tab.set(None);
+    app_state.tabs.update(|tabs|tabs.clear())
 }
 
 fn new_pressed() {
