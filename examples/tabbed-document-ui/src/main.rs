@@ -51,9 +51,9 @@ struct ApplicationState {
 
 fn app_view() -> impl IntoView {
     let toolbar = h_stack((
-        button("Add home").on_click_stop(add_home_pressed),
-        button("New").on_click_stop(new_pressed),
-        button("Open").on_click_stop(open_pressed),
+        button("Add home").action(add_home_pressed),
+        button("New").action(new_pressed),
+        button("Open").action(open_pressed),
     ))
         .style(|s| s
             .width_full()
@@ -73,7 +73,7 @@ fn app_view() -> impl IntoView {
             match tab_kind {
                 TabKind::Home(_home_tab) => {
                     button("Home")
-                        .on_click_stop(move |_event| {
+                        .action(move |_event| {
                             println!("Home tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
@@ -81,7 +81,7 @@ fn app_view() -> impl IntoView {
                 }
                 TabKind::Document(_document_tab) => {
                     button("Document")
-                        .on_click_stop(move |_event| {
+                        .action(move |_event| {
                             println!("Document tab pressed");
                             let app_state: Option<Arc<ApplicationState>> = use_context();
                             app_state.unwrap().active_tab.set(Some(tab_key))
