@@ -52,7 +52,7 @@ impl TextDocument {
                                     .map_or_else(
                                         ||"None".to_string(),
                                         |(offset, length)|{
-                                            format!("offset: {}, length: {}",   offset, length)
+                                            format!("offset: {}, length: {}", offset, length)
                                         }
                                     )
                             })
