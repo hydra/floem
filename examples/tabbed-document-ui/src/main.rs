@@ -130,6 +130,8 @@ fn app_view() -> impl IntoView {
                 }
                 TabKind::Document(document_tab) => {
                     app_state.documents.with(|documents|{
+                        // FIXME why does this effect not get triggered when app_state.documents is updated?
+                        println!("building view");
                         let document = documents.get(document_tab.document_key).unwrap();
                         DocumentContainer::build_view(document).into_any()
                     })
