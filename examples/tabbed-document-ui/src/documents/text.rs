@@ -12,6 +12,7 @@ pub struct TextDocument {
 }
 
 impl TextDocument {
+
     pub fn new(path: PathBuf) -> Self {
 
         let content = fs::read_to_string(&path).unwrap();
@@ -84,5 +85,9 @@ impl TextDocument {
                 .width_full()
                 .height_full()
             )
+    }
+
+    pub fn path(&self) -> &PathBuf {
+        &self.path
     }
 }

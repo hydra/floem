@@ -1,4 +1,3 @@
-
 use crate::documents::DocumentKey;
 
 #[derive(Clone)]

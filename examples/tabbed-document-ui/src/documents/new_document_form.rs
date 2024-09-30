@@ -32,7 +32,8 @@ pub struct NewDocumentForm {
     pub(crate) directory_path: RwSignal<PathBuf>,
     event_signal: NewDocumentEventSignal,
 
-    document_key: Option<DocumentKey>
+    document_key: Option<DocumentKey>,
+    pub(crate) file_path_signal: RwSignal<String>
 }
 
 #[derive(Debug)]
@@ -42,13 +43,13 @@ pub enum NewDocumentEvent {
 
 impl NewDocumentForm {
 
-    pub fn new(event_signal: NewDocumentEventSignal) -> Self {
+    pub fn new(event_signal: NewDocumentEventSignal, file_path_signal: RwSignal<String>) -> Self {
         Self {
             kind: create_rw_signal(NewDocumentKind::Text),
             name: create_rw_signal(Default::default()),
             directory_path: create_rw_signal(Default::default()),
             document_key: None,
-
+            file_path_signal,
             event_signal
         }
     }
@@ -59,6 +60,10 @@ impl NewDocumentForm {
 
     pub fn set_document_key(&mut self, document_key: DocumentKey) {
         self.document_key.replace(document_key);
+    }
+
+    pub fn set_file_path_signal(&mut self, signal: RwSignal<String>) {
+        self.file_path_signal = signal;
     }
 
     fn on_directory_pressed(file_info_signal: RwSignal<Option<FileInfo>>) {

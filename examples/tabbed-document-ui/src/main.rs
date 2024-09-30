@@ -1,14 +1,15 @@
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::Arc;
-use image::{ImageFormat, Rgb, Rgba};
+use image::{ImageFormat, Rgb};
 use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, img, tab, TupleStackExt};
+use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, label, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -47,7 +48,7 @@ fn main() {
 
 struct ApplicationState {
     documents: RwSignal<SlotMap<DocumentKey, DocumentKind>>,
-    tabs: RwSignal<Vec<TabKind>>,
+    tabs: RwSignal<Vec<(TabKind, RwSignal<String>)>>,
     active_tab: RwSignal<Option<TabKey>>,
     config: Config,
 }
@@ -79,25 +80,27 @@ fn app_view() -> impl IntoView {
             app_state.unwrap().tabs.get().into_iter().enumerate()
         },
         move |(index, _tab_kind)| TabKey::new(*index),
-        move |(index, tab_kind)| {
+        move |(index, (tab_kind, tab_name))| {
             println!("adding tab. tab_id: {:?}", index);
+
+            let tab_name_label = label(move || tab_name.get());
 
             match tab_kind {
                 TabKind::Home(_home_tab) => {
-                    button("Home")
+                    button(tab_name_label)
                         .action(move || {
                             println!("Home tab pressed");
-                            let app_state: Option<Arc<ApplicationState>> = use_context();
-                            app_state.unwrap().active_tab.set(Some(TabKey::new(index)))
+                            let app_state: Arc<ApplicationState> = use_context().unwrap();
+                            app_state.active_tab.set(Some(TabKey::new(index)))
                         })
                         .into_any()
                 }
                 TabKind::Document(_document_tab) => {
-                    button("Document")
+                    button(tab_name_label)
                         .action(move || {
                             println!("Document tab pressed");
-                            let app_state: Option<Arc<ApplicationState>> = use_context();
-                            app_state.unwrap().active_tab.set(Some(TabKey::new(index)))
+                            let app_state: Arc<ApplicationState> = use_context().unwrap();
+                            app_state.active_tab.set(Some(TabKey::new(index)))
                         })
                         .into_any()
                 }
@@ -125,11 +128,11 @@ fn app_view() -> impl IntoView {
             println!("tab::key_fn");
             TabKey::new(*index)
         },
-        move |(index, active_tab)| {
+        move |(index, (active_tab, active_tab_name))| {
             println!("tab::view_fn");
 
             let tab_key = TabKey::new(index);
-            println!("displaying tab. tab_id: {:?}", &tab_key);
+            println!("displaying tab. tab_id: {:?}, name: {}", &tab_key, active_tab_name.get());
 
             let app_state: Arc<ApplicationState> = use_context().unwrap();
 
@@ -180,11 +183,7 @@ fn add_home_pressed() {
 
     let app_state: Arc<ApplicationState> = use_context().unwrap();
 
-    app_state.tabs.update(|tabs|{
-        tabs.push(
-            TabKind::Home(HomeTab {})
-        );
-    });
+    add_home_tab(&app_state);
 }
 
 fn close_all_pressed() {
@@ -199,11 +198,9 @@ fn close_all_pressed() {
 fn new_pressed() {
     println!("New pressed");
 
-
     let event_signal = NewDocumentForm::create_event_signal();
 
     create_effect(move |_|{
-
         event_signal.with(|event| match event {
             Some((event, document_key))      => {
                 println!("event: {:?}", &event);
@@ -230,7 +227,7 @@ fn new_pressed() {
                                     file.write("New file content".as_bytes()).expect("bytes should be written");
                                 }
 
-                                DocumentKind::TextDocument(TextDocument::new(path))
+                                DocumentKind::TextDocument(TextDocument::new(path.clone()))
                             },
                             NewDocumentKind::Bitmap => {
                                 {
@@ -248,12 +245,17 @@ fn new_pressed() {
                                     imgbuf.write_to(&mut file, ImageFormat::Bmp).expect("should write to file");
                                 }
 
-                                DocumentKind::ImageDocument(ImageDocument::new(path))
+                                DocumentKind::ImageDocument(ImageDocument::new(path.clone()))
                             }
                         };
 
+                        // Put the file name into signal, this can be used for example to update the tab title
+                        form.file_path_signal.update(|name| *name = filename_from_path(&path));
+
                         // Replace the document, currently the form, with a text document
                         *document = new_document;
+
+
                     }
 
                     println!("documents: {:?}", documents)
@@ -264,12 +266,13 @@ fn new_pressed() {
         });
     });
 
+    let name_signal = create_rw_signal("New".to_string());
 
     let app_state: Arc<ApplicationState> = use_context().unwrap();
 
     let document_key = app_state.documents.try_update(|documents| {
 
-        let new_document_form = NewDocumentForm::new(event_signal);
+        let new_document_form = NewDocumentForm::new(event_signal, name_signal.clone());
         let document = DocumentKind::NewDocumentForm(new_document_form);
 
         let document_key = documents.insert(document);
@@ -284,13 +287,18 @@ fn new_pressed() {
 
     let tab_key = app_state.tabs.try_update(|tabs| {
         tabs.push(
-            TabKind::Document(DocumentTab { document_key })
+            (
+                TabKind::Document(DocumentTab { document_key: document_key.clone() }),
+                name_signal
+            )
         );
 
         TabKey::new(tabs.len() - 1)
     });
 
     app_state.active_tab.set(tab_key);
+
+
 }
 
 fn open_pressed() {
@@ -327,9 +335,14 @@ fn open_pressed() {
             documents.insert(document)
         }).unwrap();
 
+        let name_signal = create_file_name_signal(path);
+
         let tab_key = app_state.tabs.try_update(|tabs| {
             tabs.push(
-                TabKind::Document(DocumentTab { document_key })
+                (
+                    TabKind::Document(DocumentTab { document_key }),
+                    name_signal,
+                )
             );
 
             TabKey::new(tabs.len() - 1)
@@ -363,14 +376,33 @@ fn open_pressed() {
     );
 }
 
-fn show_home_tab(app_state: &ApplicationState) {
-    let tab_key = app_state.tabs.try_update(|tabs| {
+fn filename_from_path(path: &PathBuf) -> String {
+    let file_name = path.file_name().unwrap().to_str().unwrap();
+
+    file_name.to_string()
+}
+
+fn create_file_name_signal(path: &PathBuf) -> RwSignal<String> {
+    create_rw_signal(filename_from_path(path))
+}
+
+fn add_home_tab(app_state: &ApplicationState) -> TabKey {
+    let tab_key = app_state.tabs.try_update(|tabs|{
         tabs.push(
-            TabKind::Home(HomeTab {})
+            (
+                TabKind::Home(HomeTab {}),
+                create_rw_signal("Home".to_string()),
+            )
         );
 
         TabKey::new(tabs.len() - 1)
     });
 
-    app_state.active_tab.set(tab_key);
+    tab_key.unwrap()
+}
+
+fn show_home_tab(app_state: &ApplicationState) {
+    let tab_key = add_home_tab(app_state);
+
+    app_state.active_tab.set(Some(tab_key));
 }

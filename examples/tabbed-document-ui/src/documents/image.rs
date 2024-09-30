@@ -10,6 +10,7 @@ pub struct ImageDocument {
     coordinate: Option<(usize, usize)>
 }
 
+
 impl ImageDocument {
     pub fn new(path: PathBuf) -> Self {
         Self {
@@ -74,4 +75,9 @@ impl ImageDocument {
                 .height_full()
             )
     }
+
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
 }
