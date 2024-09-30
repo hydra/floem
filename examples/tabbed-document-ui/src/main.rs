@@ -315,7 +315,7 @@ fn open_pressed() {
 
                 DocumentKind::TextDocument(text_document)
             },
-            "bmp" => {
+            "bmp" | "png" | "jpg" | "jpeg" | "svg" => {
                 let image_document = ImageDocument::new(path.clone());
 
                 DocumentKind::ImageDocument(image_document)
@@ -343,12 +343,16 @@ fn open_pressed() {
             .title("Select a file")
             .allowed_types(vec![
                 FileSpec {
-                    name: "text",
+                    name: "All supported types",
+                    extensions: &["txt", "bmp", "png", "jpg", "jpeg", "svg"]
+                },
+                FileSpec {
+                    name: "Text",
                     extensions: &["txt"],
                 },
                 FileSpec {
-                    name: "image",
-                    extensions: &["bmp"],
+                    name: "Image",
+                    extensions: &["bmp", "png", "jpg", "jpeg", "svg"],
                 }
             ]),
         move |file_info| {
