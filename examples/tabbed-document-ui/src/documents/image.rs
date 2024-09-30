@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use floem::peniko::Color;
 use floem::style::TextOverflow;
 use floem::View;
-use floem::views::{Decorators, empty, h_stack, label, static_label, v_stack};
+use floem::views::{Decorators, h_stack, img_from_path, label, static_label, v_stack};
 
 pub struct ImageDocument {
     path: PathBuf,
@@ -55,13 +55,18 @@ impl ImageDocument {
             //
             {
                 // TODO show the image
-                empty()
+                let path = self.path.clone();
+                img_from_path(move || path.clone())
+                    .style(|s|s
+                        .min_height(256)
+                        .min_width(256)
+                    )
             }
                 .style(|s|s
                     .height_full()
                     // FIXME if this is 80% or 'full' it still doesn't take up the remaining space.
                     .width_full()
-                    .background(Color::DARK_GRAY)
+                    .background(Color::PURPLE)
                 ),
         ))
             .style(|s|s
