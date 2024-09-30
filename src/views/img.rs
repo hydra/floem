@@ -88,6 +88,7 @@ pub struct Img {
     content_node: Option<NodeId>,
 }
 
+#[deprecated]
 pub fn img(image: impl Fn() -> Vec<u8> + 'static) -> Img {
     img_from_bytes(image)
 }
