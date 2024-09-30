@@ -7,7 +7,7 @@ use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_stack, h_stack, tab, TupleStackExt};
+use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -132,19 +132,23 @@ fn app_view() -> impl IntoView {
 
             let app_state: Arc<ApplicationState> = use_context().unwrap();
 
-            match active_tab {
-                TabKind::Home(_home_tab) => {
-                    HomeContainer::build_view(tab_key).into_any()
+            // We need a `dyn_view` here to make the content update when `app_state.documents` is changed
+            // this happens when a new document form is replaced with an actual document, but without
+            // a new tab being created.
+            dyn_view(move ||{
+                match &active_tab {
+                    TabKind::Home(_home_tab) => {
+                        HomeContainer::build_view(tab_key).into_any()
+                    }
+                    TabKind::Document(document_tab) => {
+                        app_state.documents.with(|documents|{
+                            println!("building view");
+                            let document = documents.get(document_tab.document_key).unwrap();
+                            DocumentContainer::build_view(document).into_any()
+                        })
+                    }
                 }
-                TabKind::Document(document_tab) => {
-                    app_state.documents.with(|documents|{
-                        // FIXME why does this effect not get triggered when app_state.documents is updated?
-                        println!("building view");
-                        let document = documents.get(document_tab.document_key).unwrap();
-                        DocumentContainer::build_view(document).into_any()
-                    })
-                }
-            }
+            })
         }
     )
         .style(|s| s
