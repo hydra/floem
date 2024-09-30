@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use std::sync::Arc;
 use slotmap::SlotMap;
 use floem::action::open_file;
@@ -9,6 +11,7 @@ use floem::views::{button, Decorators, dyn_stack, h_stack, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
+use crate::documents::new_document_form::NewDocumentForm;
 use crate::documents::text::TextDocument;
 use crate::tabs::document::DocumentTab;
 use crate::tabs::home::{HomeContainer, HomeTab};
@@ -169,8 +172,74 @@ fn close_all_pressed() {
     app_state.tabs.update(|tabs|tabs.clear())
 }
 
+
+
 fn new_pressed() {
     println!("New pressed");
+
+
+    let event_signal = NewDocumentForm::create_event_signal();
+
+    create_effect(move |_|{
+
+        event_signal.with(|event| match event {
+            Some((event, document_key))      => {
+                println!("event: {:?}", &event);
+
+                let app_state: Arc<ApplicationState> = use_context().unwrap();
+                app_state.documents.update(|documents|{
+                    let document = documents.get_mut(document_key.clone()).unwrap();
+                    if let DocumentKind::NewDocumentForm(form) = document {
+                        println!("kind: {:?}", form.kind.get());
+                        println!("name: {:?}", form.name.get());
+                        println!("directory_path: {:?}", form.directory_path.get());
+
+                        let mut path = form.directory_path.get().clone();
+                        path.push(form.name.get());
+
+                        {
+                            let mut file = File::create_new(path.clone()).unwrap();
+                            file.write("New file content".as_bytes()).expect("bytes should be written");
+                        }
+
+                        *document = DocumentKind::TextDocument(TextDocument::new(path));
+                    }
+
+                    println!("documents: {:?}", documents)
+                })
+
+            }
+            _ => ()
+        });
+    });
+
+
+    let app_state: Arc<ApplicationState> = use_context().unwrap();
+
+    let document_key = app_state.documents.try_update(|documents| {
+
+        let new_document_form = NewDocumentForm::new(event_signal);
+        let document = DocumentKind::NewDocumentForm(new_document_form);
+
+        let document_key = documents.insert(document);
+
+        let document = documents.get_mut(document_key).unwrap();
+        if let DocumentKind::NewDocumentForm(new_document_form) = document {
+            new_document_form.set_document_key(document_key);
+        }
+
+        document_key
+    }).unwrap();
+
+    let tab_key = app_state.tabs.try_update(|tabs| {
+        tabs.push(
+            TabKind::Document(DocumentTab { document_key })
+        );
+
+        TabKey::new(tabs.len() - 1)
+    });
+
+    app_state.active_tab.set(tab_key);
 }
 
 fn open_pressed() {
