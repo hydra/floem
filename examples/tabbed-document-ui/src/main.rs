@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::sync::Arc;
-use image::{ImageFormat, Rgb, Rgba};
+use image::{ImageFormat, Rgba};
 use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
@@ -150,6 +150,10 @@ fn app_view() -> impl IntoView {
                     }
                 }
             })
+                .style(|s|s
+                    .width_full()
+                    .height_full()
+                )
         }
     )
         .style(|s| s
