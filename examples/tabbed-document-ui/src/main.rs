@@ -1,14 +1,14 @@
 use std::fs::File;
 use std::io::Write;
 use std::sync::Arc;
-use image::{ImageFormat, Rgba};
+use image::{ImageFormat, Rgb, Rgba};
 use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::IntoView;
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, tab, TupleStackExt};
+use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, img, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -224,6 +224,8 @@ fn new_pressed() {
                         let new_document = match new_document_kind {
                             NewDocumentKind::Text => {
                                 {
+                                    path.set_extension("txt");
+
                                     let mut file = File::create_new(path.clone()).unwrap();
                                     file.write("New file content".as_bytes()).expect("bytes should be written");
                                 }
@@ -232,7 +234,15 @@ fn new_pressed() {
                             },
                             NewDocumentKind::Bitmap => {
                                 {
-                                    let imgbuf = image::ImageBuffer::<Rgba<u8>, Vec<u8>>::new(256, 256);
+                                    path.set_extension("bmp");
+
+                                    let mut imgbuf = image::ImageBuffer::<Rgb<u8>, Vec<u8>>::new(256, 256);
+
+                                    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+                                        let r = (0.3 * x as f32) as u8;
+                                        let b = (0.3 * y as f32) as u8;
+                                        *pixel = Rgb([r, 0, b]);
+                                    }
 
                                     let mut file = File::create_new(path.clone()).unwrap();
                                     imgbuf.write_to(&mut file, ImageFormat::Bmp).expect("should write to file");
