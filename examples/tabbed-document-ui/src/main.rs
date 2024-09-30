@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::sync::Arc;
+use image::{ImageFormat, Rgb, Rgba};
 use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
@@ -11,7 +12,7 @@ use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, tab, TupleS
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
-use crate::documents::new_document_form::NewDocumentForm;
+use crate::documents::new_document_form::{NewDocumentForm, NewDocumentKind};
 use crate::documents::text::TextDocument;
 use crate::tabs::document::DocumentTab;
 use crate::tabs::home::{HomeContainer, HomeTab};
@@ -191,8 +192,6 @@ fn close_all_pressed() {
     app_state.tabs.update(|tabs|tabs.clear())
 }
 
-
-
 fn new_pressed() {
     println!("New pressed");
 
@@ -216,17 +215,31 @@ fn new_pressed() {
                         let mut path = form.directory_path.get().clone();
                         path.push(form.name.get());
 
-                        // TODO use the 'kind' field of the form.
+                        let new_document_kind = form.kind.get();
 
-                        {
-                            let mut file = File::create_new(path.clone()).unwrap();
-                            file.write("New file content".as_bytes()).expect("bytes should be written");
-                        }
+                        let new_document = match new_document_kind {
+                            NewDocumentKind::Text => {
+                                {
+                                    let mut file = File::create_new(path.clone()).unwrap();
+                                    file.write("New file content".as_bytes()).expect("bytes should be written");
+                                }
+
+                                DocumentKind::TextDocument(TextDocument::new(path))
+                            },
+                            NewDocumentKind::Bitmap => {
+                                {
+                                    let imgbuf = image::ImageBuffer::<Rgba<u8>, Vec<u8>>::new(256, 256);
+
+                                    let mut file = File::create_new(path.clone()).unwrap();
+                                    imgbuf.write_to(&mut file, ImageFormat::Bmp).expect("should write to file");
+                                }
+
+                                DocumentKind::ImageDocument(ImageDocument::new(path))
+                            }
+                        };
 
                         // Replace the document, currently the form, with a text document
-                        *document = DocumentKind::TextDocument(TextDocument::new(path));
-
-                        // FIXME how to make the document container display the updated document.
+                        *document = new_document;
                     }
 
                     println!("documents: {:?}", documents)
