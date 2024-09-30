@@ -102,18 +102,23 @@ fn app_view() -> impl IntoView {
 
     let document_container = tab(
         move || {
+            println!("tab::active_fn");
             let app_state: Arc<ApplicationState> = use_context().unwrap();
             app_state.active_tab.get().map(|active|*active)
         },
         move || {
+            println!("tab::each_fn");
             let app_state: Arc<ApplicationState> = use_context().unwrap();
             app_state.tabs.get().into_iter().enumerate()
         },
         // TODO investigate why we need this closure at all, it's not clear from the examples and there is no documentation.
         move |(index, _tab_kind)| {
+            println!("tab::key_fn");
             TabKey::new(*index)
         },
         move |(index, active_tab)| {
+            println!("tab::view_fn");
+
             let tab_key = TabKey::new(index);
             println!("displaying tab. tab_id: {:?}", &tab_key);
 
@@ -197,12 +202,17 @@ fn new_pressed() {
                         let mut path = form.directory_path.get().clone();
                         path.push(form.name.get());
 
+                        // TODO use the 'kind' field of the form.
+
                         {
                             let mut file = File::create_new(path.clone()).unwrap();
                             file.write("New file content".as_bytes()).expect("bytes should be written");
                         }
 
+                        // Replace the document, currently the form, with a text document
                         *document = DocumentKind::TextDocument(TextDocument::new(path));
+
+                        // FIXME how to make the document container display the updated document.
                     }
 
                     println!("documents: {:?}", documents)

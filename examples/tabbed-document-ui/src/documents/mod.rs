@@ -34,6 +34,7 @@ pub struct DocumentContainer {}
 
 impl DocumentContainer {
     pub fn build_view(document_kind: &DocumentKind) -> impl View {
+        println!("DocumentContainer::build_view. kind: {:?}", document_kind);
         match document_kind {
             DocumentKind::TextDocument(text_document) => {
                 text_document.build_view().into_any()
