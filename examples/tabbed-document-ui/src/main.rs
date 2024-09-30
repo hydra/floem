@@ -52,6 +52,14 @@ struct ApplicationState {
 }
 
 fn app_view() -> impl IntoView {
+
+    create_effect(|_|{
+        let app_state: Option<Arc<ApplicationState>> = use_context();
+        app_state.unwrap().documents.with(|_documents|{
+            println!("with documents effect");
+        })
+    });
+
     let toolbar = h_stack((
         button("Add home").action(add_home_pressed),
         button("New").action(new_pressed),
