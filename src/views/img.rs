@@ -1,4 +1,6 @@
 use std::sync::Arc;
+use std::path::PathBuf;
+use std::rc::Rc;
 
 use floem_reactive::create_effect;
 use peniko::Blob;
@@ -88,6 +90,18 @@ pub struct Img {
 }
 
 pub fn img(image: impl Fn() -> Vec<u8> + 'static) -> Img {
+    img_from_bytes(image)
+}
+
+pub fn img_from_image(image: impl Fn() -> DynamicImage + 'static) -> Img {
+    img_dynamic(move || Some(Rc::new(image())))
+}
+
+pub fn img_from_path(image: impl Fn() -> PathBuf + 'static) -> Img {
+    img_dynamic(move || image::open(&image()).ok().map(Rc::new))
+}
+
+pub fn img_from_bytes(image: impl Fn() -> Vec<u8> + 'static) -> Img {
     let image = image::load_from_memory(&image()).ok();
     let width = image.as_ref().map_or(0, |img| img.width());
     let height = image.as_ref().map_or(0, |img| img.height());
