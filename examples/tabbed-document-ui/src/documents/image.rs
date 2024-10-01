@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 use floem::peniko::Color;
 use floem::style::TextOverflow;
+use floem::unit::{Px, UnitExt};
 use floem::View;
 use floem::views::{Decorators, img_from_path, label, static_label, TupleStackExt};
+use crate::ui::draggable::h_draggable_container;
 use crate::ui::info_panel::{info_panel, info_panel_row};
 
 pub struct ImageDocument {
@@ -44,7 +46,6 @@ impl ImageDocument {
         ))
             .style(|s|s
                 .height_full()
-                .width_pct(20.0)
             );
 
         let content = {
@@ -58,16 +59,18 @@ impl ImageDocument {
         }
             .style(|s|s
                 .height_full()
-                // FIXME if this is 80% or 'full' it still doesn't take up the remaining space.
                 .width_full()
+                // FIXME this purple background is visible at the top of the window, it should not be
                 .background(Color::PURPLE)
             );
 
-        (
+        h_draggable_container(
             info_panel,
             content,
+            200.px(),
+            6.px(),
+            2.px()
         )
-            .h_stack()
             .style(|s|s
                 .width_full()
                 .height_full()

@@ -3,8 +3,10 @@ use std::path::PathBuf;
 use floem::peniko::Color;
 use floem::reactive::SignalGet;
 use floem::style::TextOverflow;
+use floem::unit::UnitExt;
 use floem::View;
 use floem::views::{Decorators, label, static_label, text_editor, TupleStackExt};
+use crate::ui::draggable::h_draggable_container;
 use crate::ui::info_panel::{info_panel, info_panel_row};
 
 pub struct TextDocument {
@@ -58,7 +60,6 @@ impl TextDocument {
         ))
             .style(|s| s
                 .height_full()
-                .width_pct(20.0)
             );
 
         let content = {
@@ -71,11 +72,13 @@ impl TextDocument {
             );
 
 
-        (
+        h_draggable_container(
             info_panel,
             content,
+            200.px(),
+            6.px(),
+            2.px()
         )
-            .h_stack()
             .style(|s|s
                 .width_full()
                 .height_full()
