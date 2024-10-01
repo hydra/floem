@@ -1,10 +1,10 @@
 use floem::event::{Event, EventListener, EventPropagation};
 use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, SignalGet, SignalUpdate};
-use floem::style::{CursorStyle, Position, Width};
-use floem::unit::{Px, UnitExt};
+use floem::style::{CursorStyle, Position};
+use floem::unit::Px;
 use floem::View;
-use floem::views::{Decorators, empty, h_stack, TupleStackExt};
+use floem::views::{Decorators, empty, h_stack};
 
 pub fn h_draggable_container<V1: View + 'static, V2: View + 'static>(v1: V1, v2: V2, initial_position: Px, handle_width: Px, width: Px) -> impl View {
 

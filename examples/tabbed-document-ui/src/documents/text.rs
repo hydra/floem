@@ -5,7 +5,7 @@ use floem::reactive::SignalGet;
 use floem::style::TextOverflow;
 use floem::unit::UnitExt;
 use floem::View;
-use floem::views::{Decorators, label, static_label, text_editor, TupleStackExt};
+use floem::views::{Decorators, label, static_label, text_editor};
 use crate::ui::draggable::h_draggable_container;
 use crate::ui::info_panel::{info_panel, info_panel_row};
 

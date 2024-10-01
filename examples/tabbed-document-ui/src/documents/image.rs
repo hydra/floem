@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use floem::peniko::Color;
 use floem::style::TextOverflow;
-use floem::unit::{Px, UnitExt};
+use floem::unit::UnitExt;
 use floem::View;
-use floem::views::{Decorators, img_from_path, label, static_label, TupleStackExt};
+use floem::views::{Decorators, img_from_path, label, static_label};
 use crate::ui::draggable::h_draggable_container;
 use crate::ui::info_panel::{info_panel, info_panel_row};
 
