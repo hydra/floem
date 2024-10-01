@@ -9,7 +9,7 @@ use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::{IntoView, View, ViewId};
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, label, tab, TupleStackExt};
+use floem::views::{button, Decorators, dyn_view, h_stack, label, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
@@ -18,6 +18,7 @@ use crate::documents::text::TextDocument;
 use crate::tabs::document::DocumentTab;
 use crate::tabs::home::{HomeContainer, HomeTab};
 use crate::tabs::{TabKey, TabKind};
+use crate::ui::tab_bar::{tab_bar, TabKeyFactory};
 
 pub mod config;
 pub mod documents;
@@ -80,43 +81,17 @@ fn app_view() -> impl IntoView {
             .background(Color::parse("#eeeeee").unwrap())
         );
 
-    let tab_bar = dyn_stack(
+    let app_state: Arc<ApplicationState> = use_context().unwrap();
+
+    let tab_bar = tab_bar(app_state.active_tab,
         move || {
             let app_state: Option<Arc<ApplicationState>> = use_context();
 
             app_state.unwrap().tabs.get().into_iter().enumerate()
-        },
-        move |(index, _tab_kind)| TabKey::new(*index),
-        move |(index, (tab_kind, tab_name))| {
-            println!("adding tab. tab_id: {:?}", index);
-
-            let tab_name_label = label(move || tab_name.get());
-
-            match tab_kind {
-                TabKind::Home(_home_tab) => {
-                    button(tab_name_label)
-                        .action(move || {
-                            println!("Home tab pressed");
-                            let app_state: Arc<ApplicationState> = use_context().unwrap();
-                            app_state.active_tab.set(Some(TabKey::new(index)))
-                        })
-                        .into_any()
-                }
-                TabKind::Document(_document_tab) => {
-                    button(tab_name_label)
-                        .action(move || {
-                            println!("Document tab pressed");
-                            let app_state: Arc<ApplicationState> = use_context().unwrap();
-                            app_state.active_tab.set(Some(TabKey::new(index)))
-                        })
-                        .into_any()
-                }
-            }
         }
     )
         .style(|s| s
             .width_full()
-            .background(Color::parse("#dddddd").unwrap())
         );
 
     let document_container = tab(
