@@ -9,6 +9,7 @@ use floem::{
     },
     IntoView, View,
 };
+use floem::views::empty;
 
 const SIDEBAR_WIDTH: f64 = 100.0;
 
@@ -63,7 +64,7 @@ pub fn draggable_sidebar_view() -> impl IntoView {
             .border_color(Color::rgb8(205, 205, 205))
     });
 
-    let dragger = label(|| "")
+    let dragger = empty()
         .style(move |s| {
             s.position(Position::Absolute)
                 .z_index(10)
