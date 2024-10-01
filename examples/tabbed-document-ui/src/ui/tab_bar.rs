@@ -50,7 +50,14 @@ style_class!(pub TabCloseButtonClass);
 style_class!(pub TabItemClass);
 style_class!(pub TabBarClass);
 
-pub fn tab_bar<IF, I, T, K>(active_tab: RwSignal<Option<K>>, each_fn: IF) -> TabBar<T, K>
+#[derive(Debug)]
+pub enum TabBarEvent<K> {
+    TabClosed { key: K }
+}
+
+pub type TabBarEventSignal<K> = RwSignal<Option<TabBarEvent<K>>>;
+
+pub fn tab_bar<IF, I, T, K>(event_signal: TabBarEventSignal<K>, active_tab: RwSignal<Option<K>>, each_fn: IF) -> TabBar<T, K>
 where
     IF: Fn() -> I + 'static,
     I: IntoIterator<Item = (usize, TabItem<T>)>,
@@ -80,7 +87,10 @@ where
             )
         )
             .action(move || {
+                let key = K::new(index);
+
                 println!("close clicked");
+                event_signal.set(Some(TabBarEvent::TabClosed { key }));
             })
             .class(TabCloseButtonClass)
             .remove_class(ButtonClass)

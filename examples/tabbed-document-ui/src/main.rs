@@ -8,7 +8,7 @@ use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::{IntoView, View, ViewId};
 use floem::peniko::Color;
-use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
+use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith, use_context};
 use floem::views::{button, Decorators, dyn_view, h_stack, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
@@ -18,7 +18,7 @@ use crate::documents::text::TextDocument;
 use crate::tabs::document::DocumentTab;
 use crate::tabs::home::{HomeContainer, HomeTab};
 use crate::tabs::TabKind;
-use crate::ui::tab_bar::{TabItem, tab_bar, TabKeyFactory, TabKey};
+use crate::ui::tab_bar::{TabItem, tab_bar, TabKeyFactory, TabKey, TabBarEventSignal, TabBarEvent};
 
 pub mod config;
 pub mod documents;
@@ -85,11 +85,52 @@ fn app_view() -> impl IntoView {
 
     let app_state: Arc<ApplicationState> = use_context().unwrap();
 
-    let tab_bar = tab_bar(app_state.active_tab,
-        move || {
-            let app_state: Option<Arc<ApplicationState>> = use_context();
+    let tab_bar_event_signal: TabBarEventSignal<TabKey> = create_rw_signal(None);
 
-            app_state.unwrap().tabs.get().into_iter().enumerate()
+    create_effect(move |_| {
+        tab_bar_event_signal.with(|event|{
+           if let Some(event) = event {
+               match event {
+                   TabBarEvent::TabClosed { key } => {
+                       let app_state: Arc<ApplicationState> = use_context().unwrap();
+                       app_state.active_tab.try_update(|active_tab|{
+                           match active_tab {
+                               Some(active_tab_key) if active_tab_key.eq(&key) => {
+                                   println!("closing active tab");
+                                   *active_tab = None;
+                               }
+                               _ => {}
+                           }
+                       });
+
+                       let tab_item = app_state.tabs.try_update(|tabs|{
+                           let index = **key;
+                           tabs.remove(index)
+                       }).unwrap();
+
+                       let document_key = match tab_item.kind {
+                           TabKind::Home(_home_tab) => None,
+                           TabKind::Document(document_tab) => Some(document_tab.document_key),
+                       };
+
+                       if let Some(document_key) = document_key {
+                           app_state.documents.update(|documents|{
+                               documents.remove(document_key);
+                           });
+                       }
+                   }
+               }
+           }
+        });
+    });
+
+    let tab_bar = tab_bar(
+        tab_bar_event_signal,
+        app_state.active_tab,
+        move || {
+            let app_state: Arc<ApplicationState> = use_context().unwrap();
+
+            app_state.tabs.get().into_iter().enumerate()
         }
     )
         .style(|s| s
@@ -121,27 +162,20 @@ fn app_view() -> impl IntoView {
 
             let app_state: Arc<ApplicationState> = use_context().unwrap();
 
-            // We need a `dyn_view` here to make the content update when `app_state.documents` is changed
-            // this happens when a new document form is replaced with an actual document, but without
-            // a new tab being created.
-            dyn_view(move ||{
-                match &active_tab {
-                    TabKind::Home(_home_tab) => {
-                        HomeContainer::build_view(tab_key).into_any()
-                    }
-                    TabKind::Document(document_tab) => {
-                        app_state.documents.with(|documents|{
-                            println!("building view");
-                            let document = documents.get(document_tab.document_key).unwrap();
-                            DocumentContainer::build_view(document).into_any()
-                        })
-                    }
+            app_state.documents.track();
+
+            match &active_tab {
+                TabKind::Home(_home_tab) => {
+                    HomeContainer::build_view(tab_key).into_any()
                 }
-            })
-                .style(|s|s
-                    .width_full()
-                    .height_full()
-                )
+                TabKind::Document(document_tab) => {
+                    app_state.documents.with(|documents|{
+                        println!("building view");
+                        let document = documents.get(document_tab.document_key).unwrap();
+                        DocumentContainer::build_view(document).into_any()
+                    })
+                }
+            }
         }
     )
         .style(|s| s
@@ -181,7 +215,8 @@ fn close_all_pressed() {
     let app_state: Arc<ApplicationState> = use_context().unwrap();
 
     app_state.active_tab.set(None);
-    app_state.tabs.update(|tabs|tabs.clear())
+    app_state.tabs.update(|tabs|tabs.clear());
+    app_state.documents.update(|documents|documents.clear());
 }
 
 fn new_pressed() {
