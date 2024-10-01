@@ -5,6 +5,7 @@ use floem::reactive::SignalGet;
 use floem::style::TextOverflow;
 use floem::View;
 use floem::views::{Decorators, label, static_label, text_editor, TupleStackExt};
+use crate::ui::info_panel::{info_panel, info_panel_row};
 
 pub struct TextDocument {
     path: PathBuf,
@@ -27,42 +28,34 @@ impl TextDocument {
         let editor = text_editor(self.content.clone());
         let cursor = editor.editor().cursor;
 
-        let info_panel = (
-            {
-                (
-                    static_label("path"),
-                    static_label(self.path.to_str().unwrap())
-                        .style(|s| s
-                            // FIXME doesn't make any difference, path appears truncated
-                            .text_overflow(TextOverflow::Wrap)
-                            // FIXME this doesn't work either
-                            //.text_clip()
-                        )
-                )
-                    .h_stack()
-            },
-            {
-                (
-                    static_label("selection"),
-                    {
-                        label(move || {
-                            let cursor = cursor.get();
-                            let selection = cursor.get_selection();
 
-                            selection
-                                .map_or_else(
-                                    || "None".to_string(),
-                                    |(start, end)| {
-                                        format!("offset: {}, length: {}", start, (end as i32 - start as i32).abs())
-                                    }
-                                )
-                        })
-                    }
-                )
-                    .h_stack()
-            }
-        )
-            .v_stack()
+        let info_panel = info_panel((
+            info_panel_row(
+                "path",
+                static_label(self.path.to_str().unwrap())
+                    .style(|s| s
+                        // FIXME doesn't make any difference, path appears truncated
+                        .text_overflow(TextOverflow::Wrap)
+                        // FIXME this doesn't work either
+                        //.text_clip()
+                    )
+            ),
+            info_panel_row(
+                "selection",
+                label(move || {
+                    let cursor = cursor.get();
+                    let selection = cursor.get_selection();
+
+                    selection
+                        .map_or_else(
+                            || "None".to_string(),
+                            |(start, end)| {
+                                format!("offset: {}, length: {}", start, (end as i32 - start as i32).abs())
+                            }
+                        )
+                })
+            ),
+        ))
             .style(|s| s
                 .height_full()
                 .width_pct(20.0)

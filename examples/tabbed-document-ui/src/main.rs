@@ -23,6 +23,8 @@ pub mod config;
 pub mod documents;
 pub mod tabs;
 
+pub mod ui;
+
 fn main() {
     let config = config::load();
 
