@@ -53,6 +53,7 @@ impl ImageDocument {
             let path = self.path.clone();
             img_from_path(move || path.clone())
                 .style(|s|s
+                    // FIXME min_height is not being respected, but min_width is, why?
                     .min_height(256)
                     .min_width(256)
                 )
