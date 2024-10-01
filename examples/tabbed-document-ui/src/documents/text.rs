@@ -35,6 +35,8 @@ impl TextDocument {
                         .style(|s| s
                             // FIXME doesn't make any difference, path appears truncated
                             .text_overflow(TextOverflow::Wrap)
+                            // FIXME this doesn't work either
+                            //.text_clip()
                         )
                 )
                     .h_stack()
