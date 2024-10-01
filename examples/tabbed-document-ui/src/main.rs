@@ -26,6 +26,8 @@ pub mod tabs;
 
 pub mod ui;
 
+const VERY_DARK_GRAY: Color = Color::rgb8(0x44, 0x44, 0x44);
+
 fn main() {
     let config = config::load();
 
@@ -92,6 +94,7 @@ fn app_view() -> impl IntoView {
     )
         .style(|s| s
             .width_full()
+            .background(VERY_DARK_GRAY)
         );
 
     let document_container = tab(
@@ -144,7 +147,7 @@ fn app_view() -> impl IntoView {
         .style(|s| s
             .width_full()
             .height_full()
-            .background(Color::DIM_GRAY)
+            .background(VERY_DARK_GRAY)
         );
 
     let elements = (
