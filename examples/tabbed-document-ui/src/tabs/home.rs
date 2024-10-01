@@ -1,6 +1,6 @@
 use floem::View;
 use floem::views::{label, TupleStackExt};
-use super::TabKey;
+use crate::ui::tab_bar::TabKey;
 
 #[derive(Clone)]
 pub struct HomeTab {
