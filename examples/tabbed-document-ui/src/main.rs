@@ -6,7 +6,7 @@ use image::{ImageFormat, Rgb};
 use slotmap::SlotMap;
 use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo, FileSpec};
-use floem::IntoView;
+use floem::{IntoView, View, ViewId};
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalUpdate, SignalWith, use_context};
 use floem::views::{button, Decorators, dyn_stack, dyn_view, h_stack, label, tab, TupleStackExt};
@@ -62,11 +62,16 @@ fn app_view() -> impl IntoView {
         })
     });
 
+    let id_signal: RwSignal<Option<ViewId>> = create_rw_signal(None);
+
     let toolbar = h_stack((
         button("Add home").action(add_home_pressed),
         button("New").action(new_pressed),
         button("Open").action(open_pressed),
         button("Close all").action(close_all_pressed),
+        button("Inspect").action(move ||{
+            id_signal.get().unwrap().inspect()
+        })
     ))
         .style(|s| s
             .width_full()
@@ -165,7 +170,7 @@ fn app_view() -> impl IntoView {
             .background(Color::DIM_GRAY)
         );
 
-    (
+    let elements = (
         toolbar,
         tab_bar,
         document_container,
@@ -175,7 +180,11 @@ fn app_view() -> impl IntoView {
             .width_full()
             .height_full()
             .background(Color::LIGHT_GRAY)
-        )
+        );
+
+    id_signal.set(Some(elements.id()));
+
+    elements
 }
 
 fn add_home_pressed() {
