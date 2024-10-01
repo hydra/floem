@@ -9,19 +9,21 @@ use floem::file::{FileDialogOptions, FileInfo, FileSpec};
 use floem::{IntoView, View, ViewId};
 use floem::peniko::Color;
 use floem::reactive::{create_effect, create_rw_signal, provide_context, RwSignal, SignalGet, SignalTrack, SignalUpdate, SignalWith, use_context};
-use floem::views::{button, Decorators, dyn_view, h_stack, tab, TupleStackExt};
+use floem::views::{button, Decorators, h_stack, tab, TupleStackExt};
 use crate::config::Config;
 use crate::documents::{DocumentContainer, DocumentKey, DocumentKind};
 use crate::documents::image::ImageDocument;
 use crate::documents::new_document_form::{NewDocumentForm, NewDocumentKind};
 use crate::documents::text::TextDocument;
+use crate::home::HomeContainer;
 use crate::tabs::document::DocumentTab;
-use crate::tabs::home::{HomeContainer, HomeTab};
+use crate::tabs::home::HomeTab;
 use crate::tabs::TabKind;
 use crate::ui::tab_bar::{TabItem, tab_bar, TabKeyFactory, TabKey, TabBarEventSignal, TabBarEvent};
 
 pub mod config;
 pub mod documents;
+pub mod home;
 pub mod tabs;
 
 pub mod ui;
@@ -166,7 +168,7 @@ fn app_view() -> impl IntoView {
 
             match &active_tab {
                 TabKind::Home(_home_tab) => {
-                    HomeContainer::build_view(tab_key).into_any()
+                    HomeContainer::build_view().into_any()
                 }
                 TabKind::Document(document_tab) => {
                     app_state.documents.with(|documents|{
