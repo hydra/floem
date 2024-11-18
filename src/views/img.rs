@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use std::path::PathBuf;
-use std::rc::Rc;
-
+use image::DynamicImage;
 use floem_reactive::create_effect;
 use peniko::Blob;
 use sha2::{Digest, Sha256};
@@ -93,22 +92,27 @@ pub fn img(image: impl Fn() -> Vec<u8> + 'static) -> Img {
     img_from_bytes(image)
 }
 
-pub fn img_from_image(image: impl Fn() -> DynamicImage + 'static) -> Img {
-    img_dynamic(move || Some(Rc::new(image())))
-}
-
-pub fn img_from_path(image: impl Fn() -> PathBuf + 'static) -> Img {
-    img_dynamic(move || image::open(&image()).ok().map(Rc::new))
-}
-
-pub fn img_from_bytes(image: impl Fn() -> Vec<u8> + 'static) -> Img {
-    let image = image::load_from_memory(&image()).ok();
+pub fn img_from_image(image: impl Fn() -> Option<DynamicImage>) -> Img {
+    let image = image();
     let width = image.as_ref().map_or(0, |img| img.width());
     let height = image.as_ref().map_or(0, |img| img.height());
     let data = Arc::new(image.map_or(Default::default(), |img| img.into_rgba8().into_vec()));
     let blob = Blob::new(data);
     let image = peniko::Image::new(blob, peniko::Format::Rgba8, width, height);
     img_dynamic(move || image.clone())
+}
+
+pub fn img_from_path(path: impl Fn() -> PathBuf + 'static) -> Img {
+    let path = path();
+    let image = move||image::open(&path).ok();
+
+    img_from_image(image)
+}
+
+pub fn img_from_bytes(image: impl Fn() -> Vec<u8> + 'static) -> Img {
+    let image = move ||image::load_from_memory(&image()).ok();
+
+    img_from_image(image)
 }
 
 pub(crate) fn img_dynamic(image: impl Fn() -> peniko::Image + 'static) -> Img {
