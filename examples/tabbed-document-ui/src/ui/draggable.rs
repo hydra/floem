@@ -19,6 +19,7 @@ pub fn h_draggable_container<V1: View + 'static, V2: View + 'static>(v1: V1, v2:
                 .inset_bottom(0)
                 .inset_left(sidebar_width.get())
                 .width(handle_width)
+                // FIXME this doesn't compile with v0.2.0, find solution
                 //.border_left(width)
                 .border_color(Color::rgb8(205, 205, 205))
                 .hover(|s| s
