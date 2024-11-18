@@ -7,9 +7,9 @@ use floem::action::open_file;
 use floem::file::{FileDialogOptions, FileInfo};
 use floem::peniko::Color;
 use std::default::Default;
+use floem::prelude::ViewTuple;
 use floem::views::{button, container, Decorators, empty, label, stack, svg, text_input};
 use floem::views::dropdown::Dropdown;
-use floem::views::TupleStackExt;
 use crate::documents::DocumentKey;
 
 #[derive(strum::EnumIter, Debug, PartialEq, Clone, Copy)]
@@ -112,8 +112,8 @@ impl NewDocumentForm {
 
         let document_kind_row = (
             "File type",
-            Dropdown::new_get_set(
-                self.kind,
+            Dropdown::custom(
+                {let kind = self.kind.clone(); move ||kind.get()},
                 dropdown_view,
                 NewDocumentKind::iter(),
                 |list_item| label(move || list_item).into_any()

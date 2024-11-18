@@ -1,7 +1,7 @@
 use floem::event::{Event, EventListener, EventPropagation};
 use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, SignalGet, SignalUpdate};
-use floem::style::{CursorStyle, Position};
+use floem::style::{CursorStyle, Position, StrokeWrap};
 use floem::unit::Px;
 use floem::View;
 use floem::views::{Decorators, empty, h_stack};
@@ -19,7 +19,7 @@ pub fn h_draggable_container<V1: View + 'static, V2: View + 'static>(v1: V1, v2:
                 .inset_bottom(0)
                 .inset_left(sidebar_width.get())
                 .width(handle_width)
-                .border_left(width)
+                //.border_left(width)
                 .border_color(Color::rgb8(205, 205, 205))
                 .hover(|s| s
                     .border_color(Color::rgb8(41, 98, 218))

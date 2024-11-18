@@ -1,7 +1,8 @@
 use floem::peniko::Color;
+use floem::prelude::ViewTuple;
 use floem::unit::UnitExt;
 use floem::View;
-use floem::views::{Decorators, TupleStackExt};
+use floem::views::Decorators;
 
 pub struct HomeContainer {}
 

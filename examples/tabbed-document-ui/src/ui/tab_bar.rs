@@ -5,7 +5,8 @@ use floem::{IntoView, style_class, View, ViewId};
 use floem::peniko::Color;
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate};
 use floem::style::AlignItems;
-use floem::views::{button, ButtonClass, Decorators, dyn_stack, label, TupleStackExt};
+use floem::view_tuple::ViewTuple;
+use floem::views::{button, ButtonClass, Decorators, dyn_stack, label};
 
 pub struct TabBar<T, K>
 where
